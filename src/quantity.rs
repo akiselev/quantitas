@@ -1,5 +1,5 @@
-use crate::{Dimension, DimensionError, QuantityError, UnitId};
-use serde::{Deserialize, Serialize};
+use crate::{Dimension, QuantityError, UnitId};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt;
 
 /// Stable identity for a quantity kind. Equal dimensions do not imply equal kinds.
@@ -39,7 +39,7 @@ impl fmt::Display for QuantityKindId {
 }
 
 /// A canonical SI magnitude with dimensional and quantity-kind meaning.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Quantity {
     value_si: f64,
     dimension: Dimension,
@@ -55,6 +55,10 @@ impl Quantity {
         if !value_si.is_finite() {
             return Err(QuantityError::NonFinite);
         }
+        if kind.as_str().trim().is_empty() {
+            return Err(QuantityError::EmptyKind);
+        }
+        let value_si = if value_si == 0.0 { 0.0 } else { value_si };
         Ok(Self {
             value_si,
             dimension,
@@ -73,56 +77,22 @@ impl Quantity {
     pub fn kind(&self) -> &QuantityKindId {
         &self.kind
     }
+}
 
-    pub fn try_add(&self, rhs: &Self) -> Result<Self, QuantityError> {
-        self.require_same_meaning(rhs)?;
-        Self::new(
-            self.value_si + rhs.value_si,
-            self.dimension,
-            self.kind.clone(),
-        )
-    }
-
-    pub fn try_sub(&self, rhs: &Self) -> Result<Self, QuantityError> {
-        self.require_same_meaning(rhs)?;
-        Self::new(
-            self.value_si - rhs.value_si,
-            self.dimension,
-            self.kind.clone(),
-        )
-    }
-
-    pub fn product(&self, rhs: &Self, result_kind: QuantityKindId) -> Result<Self, QuantityError> {
-        Self::new(
-            self.value_si * rhs.value_si,
-            self.dimension.checked_product(rhs.dimension)?,
-            result_kind,
-        )
-    }
-
-    pub fn quotient(&self, rhs: &Self, result_kind: QuantityKindId) -> Result<Self, QuantityError> {
-        Self::new(
-            self.value_si / rhs.value_si,
-            self.dimension.checked_quotient(rhs.dimension)?,
-            result_kind,
-        )
-    }
-
-    fn require_same_meaning(&self, rhs: &Self) -> Result<(), QuantityError> {
-        if self.dimension != rhs.dimension {
-            return Err(DimensionError::Mismatch {
-                left: self.dimension,
-                right: rhs.dimension,
-            }
-            .into());
+impl<'de> Deserialize<'de> for Quantity {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Wire {
+            value_si: f64,
+            dimension: Dimension,
+            kind: QuantityKindId,
         }
-        if self.kind != rhs.kind {
-            return Err(QuantityError::KindMismatch {
-                unit: UnitId::new("canonical-si"),
-                kind: rhs.kind.clone(),
-            });
-        }
-        Ok(())
+
+        let wire = Wire::deserialize(deserializer)?;
+        Self::new(wire.value_si, wire.dimension, wire.kind).map_err(serde::de::Error::custom)
     }
 }
 
@@ -139,4 +109,63 @@ pub struct QuantityLiteral {
 pub struct DisplayUnit {
     pub unit: UnitId,
     pub symbol: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserialization_rejects_non_finite_canonical_values() {
+        let encoded = r#"{
+            "value_si": 1e999,
+            "dimension": [
+                {"numerator":0,"denominator":1},
+                {"numerator":0,"denominator":1},
+                {"numerator":0,"denominator":1},
+                {"numerator":0,"denominator":1},
+                {"numerator":0,"denominator":1},
+                {"numerator":0,"denominator":1},
+                {"numerator":0,"denominator":1}
+            ],
+            "kind": "test:Scalar"
+        }"#;
+        assert!(serde_json::from_str::<Quantity>(encoded).is_err());
+        assert_eq!(
+            Quantity::new(
+                f64::NAN,
+                Dimension::DIMENSIONLESS,
+                QuantityKindId::new("test:Scalar")
+            ),
+            Err(QuantityError::NonFinite)
+        );
+        assert!(
+            Quantity::new(
+                -0.0,
+                Dimension::DIMENSIONLESS,
+                QuantityKindId::new("test:Scalar")
+            )
+            .unwrap()
+            .value_si()
+            .is_sign_positive()
+        );
+        assert!(
+            serde_json::from_str::<Quantity>(
+                r#"{
+                "value_si": 1.0,
+                "dimension": [
+                    {"numerator":0,"denominator":1},
+                    {"numerator":0,"denominator":1},
+                    {"numerator":0,"denominator":1},
+                    {"numerator":0,"denominator":1},
+                    {"numerator":0,"denominator":1},
+                    {"numerator":0,"denominator":1},
+                    {"numerator":0,"denominator":1}
+                ],
+                "kind": " "
+            }"#
+            )
+            .is_err()
+        );
+    }
 }

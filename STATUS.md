@@ -1,37 +1,47 @@
 # Quantitas status
 
 Updated: 2026-08-20
-Milestone: standalone foundation extraction
+Branch: `master`
+Milestone: standalone foundation invariant pass
 
 ## Current role
 
-Quantitas owns the canonical shared representation of rational dimensions, quantities,
-quantity kinds, units, and unit-registry provenance. Resolvent and Lean Atlas depend on it;
-Quantitas depends on neither consumer.
+Quantitas owns the shared canonical representation of SI dimensions, quantities,
+quantity-kind identities, exact unit scales, unit definitions, and registry
+provenance. It depends on neither Resolvent nor Lean Atlas.
 
 ## Implemented
 
-- checked reduced rational exponents;
-- copyable seven-base SI dimensions and generic sparse dimension vectors;
-- canonical quantities and quantity-kind identifiers;
-- exact rational/decimal scales and affine point-versus-interval conversion;
-- unit definitions, registry snapshots, symbol lookup, and a standards-oriented bootstrap
-  registry;
-- parsing that preserves authored display units.
+- Reduced rational exponents with checked algebra and validating
+  deserialization.
+- Seven-base SI dimensions with checked product, quotient, integer-power, and
+  root operations.
+- Finite canonical SI quantities with non-empty kind validation.
+- One canonical `ExactScale` representation, including signed-minimum and
+  exponent-overflow handling plus validating deserialization.
+- Conflict-checked registry construction followed by an immutable, provenance-
+  bearing frozen state.
+- Frozen-registry serialization/deserialization that rebuilds indices and
+  revalidates identities, provenance, and affine point/interval contracts.
+- SI bootstrap units and parsing that retains the authored display unit.
+
+Generic quantity arithmetic and the unused sparse dimension-vector seam were
+removed. Affine arithmetic belongs in consumer code that knows the quantity-kind
+semantics.
 
 ## Validation
 
-Passed on 2026-08-20 with Rust 1.97.0:
+Passed locally on 2026-08-20 with Rust 1.97.0:
 
-```text
-cargo fmt --check
-cargo check --all-targets
-cargo clippy --all-targets -- -D warnings
-cargo test                         # 2 passed
-```
+- `cargo fmt --all -- --check`
+- `cargo check --all-targets`
+- `cargo clippy --all-targets -- -D warnings`
+- `cargo test --all-targets` — 10 unit tests passed
+- `git diff --check`
+- Resolvent consumer: `cargo check --all-targets`
 
 ## Next
 
-1. Replace bootstrap registry metadata with an admitted, generated standards snapshot.
-2. Add only consumer-neutral dimensional algebra proven useful by both Resolvent and Lean
-   Atlas.
+Replace the bootstrap metadata and definitions with an admitted, generated
+standards snapshot. Add further consumer-neutral algebra only after both initial
+consumers require the same semantics.

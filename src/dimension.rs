@@ -1,6 +1,5 @@
 use crate::{DimensionError, RationalExponent};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use std::fmt;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -96,25 +95,6 @@ impl Dimension {
         Ok(Self(result))
     }
 
-    pub fn product(self, rhs: Self) -> Self {
-        self.checked_product(rhs)
-            .expect("dimension exponent overflow")
-    }
-
-    pub fn quotient(self, rhs: Self) -> Self {
-        self.checked_quotient(rhs)
-            .expect("dimension exponent overflow")
-    }
-
-    pub fn powi(self, power: i32) -> Self {
-        self.checked_powi(power)
-            .expect("dimension exponent overflow")
-    }
-
-    pub fn root(self, degree: i32) -> Result<Self, DimensionError> {
-        self.checked_root(degree)
-    }
-
     pub fn exponent(self, basis: SiBasis) -> RationalExponent {
         self.0[basis as usize]
     }
@@ -147,53 +127,5 @@ impl fmt::Display for Dimension {
             }
         }
         if wrote { Ok(()) } else { f.write_str("1") }
-    }
-}
-
-/// A consumer-defined sparse dimension vector, used when the basis is not SI.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct DimensionVector<B: Ord>(BTreeMap<B, RationalExponent>);
-
-impl<B: Ord> DimensionVector<B> {
-    pub fn new() -> Self {
-        Self(BTreeMap::new())
-    }
-
-    pub fn from_terms(terms: impl IntoIterator<Item = (B, RationalExponent)>) -> Self {
-        Self(
-            terms
-                .into_iter()
-                .filter(|(_, exponent)| !exponent.is_zero())
-                .collect(),
-        )
-    }
-
-    pub fn terms(&self) -> impl Iterator<Item = (&B, RationalExponent)> {
-        self.0.iter().map(|(basis, exponent)| (basis, *exponent))
-    }
-}
-
-impl<B: Clone + Ord> DimensionVector<B> {
-    pub fn checked_product(&self, rhs: &Self) -> Result<Self, DimensionError> {
-        let mut result = self.0.clone();
-        for (basis, exponent) in &rhs.0 {
-            let combined = result
-                .get(basis)
-                .copied()
-                .unwrap_or(RationalExponent::ZERO)
-                .checked_add(*exponent)?;
-            if combined.is_zero() {
-                result.remove(basis);
-            } else {
-                result.insert(basis.clone(), combined);
-            }
-        }
-        Ok(Self(result))
-    }
-}
-
-impl<B: Ord> Default for DimensionVector<B> {
-    fn default() -> Self {
-        Self::new()
     }
 }
