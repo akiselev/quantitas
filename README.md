@@ -7,7 +7,5 @@ and registry provenance.
 
 Quantitas has no knowledge of fields, forms, solvers, meshes, or Lean declarations.
 Consumers provide their own scientific quantity-kind catalogs and inference policies.
-
-The crate replaces both `sinbad-league` and `resolvent-quantities`; there is deliberately
-no compatibility module between their former representations.
-
+The public model is canonical; consumer-specific compatibility representations do not
+belong in this repository.
