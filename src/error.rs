@@ -78,3 +78,46 @@ pub enum ParseQuantityError {
     #[error("unknown unit symbol `{symbol}` at byte {offset}")]
     UnknownSymbol { symbol: String, offset: usize },
 }
+
+#[derive(Clone, Debug, Error, PartialEq, Eq)]
+pub enum KindRegistryError {
+    #[error("quantity-kind registry is frozen")]
+    Frozen,
+    #[error("quantity-kind id must be non-empty")]
+    EmptyIdentity,
+    #[error("quantity-kind id `{0}` is already registered")]
+    DuplicateKind(QuantityKindId),
+    #[error("quantity-kind name `{0}` is already registered")]
+    DuplicateName(String),
+    #[error("quantity-kind `{kind}` has an empty alias")]
+    EmptyAlias { kind: QuantityKindId },
+    #[error("quantity-kind `{0}` has incomplete provenance")]
+    InvalidProvenance(QuantityKindId),
+    #[error("registry snapshot fields must be non-empty")]
+    InvalidSnapshot,
+}
+
+/// Fail-closed parse of a compound unit expression such as `W/(m*K)`.
+#[derive(Clone, Debug, Error, PartialEq, Eq)]
+pub enum UnitExpressionError {
+    #[error("empty unit expression")]
+    Empty,
+    #[error("unknown unit symbol `{symbol}` at byte {offset}")]
+    UnknownSymbol { symbol: String, offset: usize },
+    #[error("unexpected character `{character}` at byte {offset}")]
+    UnexpectedCharacter { character: char, offset: usize },
+    #[error("unexpected end of unit expression")]
+    UnexpectedEnd,
+    #[error("expected `)` at byte {offset}")]
+    UnclosedParenthesis { offset: usize },
+    #[error("unexpected token at byte {offset}")]
+    UnexpectedToken { offset: usize },
+    #[error("exponent at byte {offset} is outside the supported range")]
+    ExponentOutOfRange { offset: usize },
+    #[error("unit `{symbol}` is affine and cannot appear in a compound expression")]
+    AffineUnit { symbol: String },
+    #[error("unit expression scale is not representable: {0}")]
+    ScaleOverflow(#[from] ScaleError),
+    #[error("unit expression dimension is not representable: {0}")]
+    DimensionOverflow(#[from] DimensionError),
+}

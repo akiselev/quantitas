@@ -100,6 +100,69 @@ impl ExactScale {
     pub const fn power10(self) -> i32 {
         self.power10
     }
+
+    /// Exact product of two scales, canonicalized through [`ExactScale::new`].
+    pub fn checked_mul(self, rhs: Self) -> Result<Self, ScaleError> {
+        let numerator = self
+            .numerator
+            .checked_mul(rhs.numerator)
+            .ok_or(ScaleError::MagnitudeOverflow)?;
+        let denominator = self
+            .denominator
+            .checked_mul(rhs.denominator)
+            .ok_or(ScaleError::MagnitudeOverflow)?;
+        let power10 = self
+            .power10
+            .checked_add(rhs.power10)
+            .ok_or(ScaleError::PowerOverflow)?;
+        Self::new(numerator, denominator, power10)
+    }
+
+    /// Exact quotient of two scales, canonicalized through [`ExactScale::new`].
+    pub fn checked_div(self, rhs: Self) -> Result<Self, ScaleError> {
+        self.checked_mul(rhs.checked_powi(-1)?)
+    }
+
+    /// Exact integer power of a scale, canonicalized through [`ExactScale::new`].
+    pub fn checked_powi(self, exponent: i32) -> Result<Self, ScaleError> {
+        if exponent == 0 {
+            return Ok(Self::ONE);
+        }
+        if exponent > 0 {
+            let exp = exponent.unsigned_abs();
+            let numerator = self
+                .numerator
+                .checked_pow(exp)
+                .ok_or(ScaleError::MagnitudeOverflow)?;
+            let denominator = self
+                .denominator
+                .checked_pow(exp)
+                .ok_or(ScaleError::MagnitudeOverflow)?;
+            let power10 = self
+                .power10
+                .checked_mul(exponent)
+                .ok_or(ScaleError::PowerOverflow)?;
+            Self::new(numerator, denominator, power10)
+        } else {
+            let exp = exponent.unsigned_abs();
+            // Invert first: raising the reciprocal to the positive exponent.
+            let numerator = self
+                .denominator
+                .checked_pow(exp)
+                .ok_or(ScaleError::MagnitudeOverflow)?;
+            let denominator = self
+                .numerator
+                .checked_pow(exp)
+                .ok_or(ScaleError::MagnitudeOverflow)?;
+            let positive_exponent = i32::try_from(exp).map_err(|_| ScaleError::PowerOverflow)?;
+            let power10 = self
+                .power10
+                .checked_mul(positive_exponent)
+                .and_then(|value| value.checked_neg())
+                .ok_or(ScaleError::PowerOverflow)?;
+            Self::new(numerator, denominator, power10)
+        }
+    }
 }
 
 impl<'de> Deserialize<'de> for ExactScale {
