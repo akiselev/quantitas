@@ -1,5 +1,10 @@
 # Quantitas status
 
+SC-W2 (2026-09-17): HeatFlux / HeatFluxDensity is the standard W/m² kind,
+distinct from Power. Exact integration over area and time yields Energy.
+Owner gate: 27 tests, fmt, strict all-feature clippy, rustdoc and doctests pass.
+
+
 Updated: 2026-08-20
 Branch: `master`
 Milestone: standalone foundation invariant pass

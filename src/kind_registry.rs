@@ -368,6 +368,12 @@ const SI_KIND_SPECS: &[KindSpec] = &[
         aliases: &[],
     },
     KindSpec {
+        name: "HeatFlux",
+        dimension: [1, 0, -3, 0, 0, 0, 0],
+        canonical_unit: None,
+        aliases: &["HeatFluxDensity"],
+    },
+    KindSpec {
         name: "SpecificHeat",
         dimension: [0, 2, -2, 0, -1, 0, 0],
         canonical_unit: None,
@@ -674,5 +680,24 @@ mod tests {
             registry.freeze(bad_snapshot),
             Err(KindRegistryError::InvalidSnapshot)
         ));
+    }
+}
+
+#[cfg(test)]
+mod heat_flux_tests {
+    use super::*;
+    #[test]
+    fn heat_flux_integrates_to_energy_over_area_and_time() {
+        let kinds = QuantityKindRegistry::si_bootstrap();
+        let flux = kinds.by_name("HeatFluxDensity").unwrap();
+        assert_eq!(flux.id, kinds.by_name("HeatFlux").unwrap().id);
+        let integrated = flux
+            .dimension
+            .checked_product(Dimension::LENGTH.checked_powi(2).unwrap())
+            .unwrap()
+            .checked_product(Dimension::TIME)
+            .unwrap();
+        assert_eq!(integrated, kinds.by_name("Energy").unwrap().dimension);
+        assert_ne!(flux.id, kinds.by_name("Power").unwrap().id);
     }
 }
