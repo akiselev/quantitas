@@ -1,7 +1,7 @@
 # Quantitas
 
-Quantitas is the consumer-neutral dimensional-semantics foundation shared by
-Resolvent and Lean Atlas. It owns:
+Quantitas is the consumer-neutral dimensional-semantics foundation consumed by
+Scientia, Finitum, Krasis, and Sinbad. It owns:
 
 - reduced rational exponents over the seven SI base dimensions;
 - stable quantity-kind and unit identities;
