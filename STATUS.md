@@ -5,9 +5,9 @@ distinct from Power. Exact integration over area and time yields Energy.
 Owner gate: 27 tests, fmt, strict all-feature clippy, rustdoc and doctests pass.
 
 
-Updated: 2026-08-20
+Updated: 2026-09-17
 Branch: `master`
-Milestone: standalone foundation invariant pass
+Milestone: conserved boundary-flux quantity kinds over the standalone foundation
 
 ## Current role
 
