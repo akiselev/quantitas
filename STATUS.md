@@ -1,10 +1,10 @@
 # Quantitas status
 
-2026-09-18 implementation in acceptance:
-ThermalExpansionCoefficient is a distinct quantity kind with exact inverse-temperature dimension. The thermoelastic consumer supplies the material value; Quantitas has no material catalog. Owner gate passed: 28 tests, formatting, strict clippy, rustdoc and doctests; final consumer acceptance pending.
+2026-09-18 bounded implementation accepted:
+ThermalExpansionCoefficient is a distinct quantity kind with exact inverse-temperature dimension. The thermoelastic consumer supplies the material value; Quantitas has no material catalog. Owner gate passed: 28 tests, formatting, strict clippy, rustdoc and doctests; final consumer acceptance passed (210 tests across 35 targets, documented external-fixture retry).
 
 
-SC-W2 (2026-09-17): HeatFlux / HeatFluxDensity is the standard W/m² kind,
+Historical SC-W2 checkpoint (2026-09-17): HeatFlux / HeatFluxDensity is the standard W/m² kind,
 distinct from Power. Exact integration over area and time yields Energy.
 Owner gate: 27 tests, fmt, strict all-feature clippy, rustdoc and doctests pass.
 
@@ -54,3 +54,5 @@ Passed locally on 2026-08-20 with Rust 1.97.0:
 Replace the bootstrap metadata and definitions with an admitted, generated
 standards snapshot. Add further consumer-neutral algebra only after both initial
 consumers require the same semantics.
+
+Final cross-repository evidence: [September 18 acceptance](../sinbad/docs/validation/2026-09-18-assembly/README.md).
