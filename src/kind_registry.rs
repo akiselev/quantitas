@@ -362,6 +362,12 @@ const SI_KIND_SPECS: &[KindSpec] = &[
         aliases: &[],
     },
     KindSpec {
+        name: "ThermalExpansionCoefficient",
+        dimension: [0, 0, 0, 0, -1, 0, 0],
+        canonical_unit: None,
+        aliases: &[],
+    },
+    KindSpec {
         name: "ThermalConductivity",
         dimension: [1, 1, -3, 0, -1, 0, 0],
         canonical_unit: None,
@@ -699,5 +705,26 @@ mod heat_flux_tests {
             .unwrap();
         assert_eq!(integrated, kinds.by_name("Energy").unwrap().dimension);
         assert_ne!(flux.id, kinds.by_name("Power").unwrap().id);
+    }
+}
+
+#[cfg(test)]
+mod expansion_tests {
+    use super::*;
+    #[test]
+    fn expansion_times_temperature_change_is_dimensionless_strain() {
+        let registry = QuantityKindRegistry::si_bootstrap();
+        let coefficient = registry.by_name("ThermalExpansionCoefficient").unwrap();
+        assert_eq!(
+            coefficient
+                .dimension
+                .checked_product(Dimension::TEMPERATURE)
+                .unwrap(),
+            registry.by_name("Dimensionless").unwrap().dimension
+        );
+        assert_ne!(
+            coefficient.id,
+            registry.by_name("Dimensionless").unwrap().id
+        );
     }
 }
